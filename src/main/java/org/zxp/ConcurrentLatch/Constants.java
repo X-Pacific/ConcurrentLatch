@@ -25,6 +25,6 @@ public class Constants {
     /**
      * 通过尝试后无法获得线程池资源，是否挂起等待（false抛出异常）
      */
-    public static final boolean AFTER_TRY_BLOCK = false;
+    public static final boolean AFTER_TRY_BLOCK = true;
 
 }
