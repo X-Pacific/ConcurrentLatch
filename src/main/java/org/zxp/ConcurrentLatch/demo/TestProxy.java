@@ -14,7 +14,6 @@ public class TestProxy {
     public static void main(String[] args) throws Exception {
         ConcurrentLatch excutor = ConcurrentLatchExcutorFactory.getConcurrentLatch();
         LatchThread platformLatchThread = new PlatformLatch();
-        LatchThread platformLatchThread2 = new PlatformLatch();
         RuleDto ruleDto = new RuleDto();
         ruleDto.setRuleID("zxp123");
         ruleDto.setMmmm(0.00001);
