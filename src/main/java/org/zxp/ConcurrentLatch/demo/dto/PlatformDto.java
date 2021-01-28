@@ -1,7 +1,5 @@
 package org.zxp.ConcurrentLatch.demo.dto;
 
-import org.zxp.ConcurrentLatch.LatchTaskName;
-
 //@LatchTaskName("platform")
 public class PlatformDto {
     private String name = "";

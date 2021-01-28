@@ -8,15 +8,7 @@ public interface ConcurrentLatch {
      * @param latchThread
      * @throws Exception
      */
-    public void put(LatchThread latchThread) throws Exception ;
-
-
-    /**
-     * 插入一个任务
-     * @param latchThread
-     * @throws Exception
-     */
-    public void put(LatchThread latchThread,String taskName) throws Exception ;
+    public <T,M> void put(LatchThread<T,M> latchThread,String taskName,M m) throws Exception ;
 
     /**
      * 清除所有任务
@@ -28,11 +20,19 @@ public interface ConcurrentLatch {
      */
     public void clean(String threadName);
 
-
     /**
      * 执行线程任务
      * @return
      * @throws Exception
      */
-    public Map<String ,Object> excute() throws Exception;
+    public <T> Map<String ,T> excute() throws Exception;
+
+    /**
+     * 根据任务名称获取返回结果
+     * @param taskName
+     * @param clazz
+     * @param <T>
+     * @return
+     */
+    public <T> T get(String taskName,Class<T> clazz);
 }

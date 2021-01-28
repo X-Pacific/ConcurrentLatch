@@ -1,6 +1,5 @@
 package org.zxp.ConcurrentLatch;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -10,23 +9,16 @@ import java.util.concurrent.Future;
  * 通过代理方式设置任务key
  * 目的是让每一个LatchThread调用handle方法都被map包围，标记其任务名称，达到执行任务返回结果与任务名称绑定的效果
  */
-public class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
+class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
     /** 线程池 不能是单例，否则有事物问题*/
     private ExecutorService excutor = null;
-    private SimpleDateFormat sdf = null;
     /**入参的map*/
-    private Map<String,LatchThread> inputMap = null;
+    private Map<String,InputMapValue<Object>> inputMap = null;
     /**出参的map*/
     private Map<String ,Object> mapResult = new HashMap<String,Object>();
 
     public ConcurrentLatchExcutorProxy(){
-        sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        inputMap = new HashMap<String,LatchThread>();
-    }
-
-    @Override
-    public void put(LatchThread latchThread) throws Exception {
-        throw new Exception("ConcurrentLatchExcutorProxy不支持当前put方法");
+        inputMap = new HashMap<String,InputMapValue<Object>>();
     }
 
     /**
@@ -36,15 +28,19 @@ public class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
      * @throws Exception
      */
     @Override
-    public void put(LatchThread latchThread,String taskName) throws Exception {
+    public void put(LatchThread latchThread,String taskName,Object m) throws Exception {
         String taskname = taskName;
         if(inputMap.containsKey(taskname)){
-            throw new Exception("不能添加重复的任务");
+            throw new IllegalArgumentException("不能添加重复的任务");
         }
         /**代理类生成组件 必须每次重新初始化*/
         ConcurrentLatchBeanFactory beanFactory = new ConcurrentLatchBeanFactory();
-        LatchThread latchThreadProxy = beanFactory.getBean(latchThread,taskName);
-        inputMap.put(taskname,latchThreadProxy);
+        /**把入参也放入map以便调用时传入*/
+        InputMapValue<Object> inputMapValue = new InputMapValue<Object>();
+        LatchThread latchThreadProxy = beanFactory.getBean(latchThread,taskName,m);
+        inputMapValue.setLatchThread(latchThreadProxy);
+        inputMapValue.setM(m);
+        inputMap.put(taskname,inputMapValue);
     }
 
     @Override
@@ -67,16 +63,15 @@ public class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             if (inputMap == null || inputMap.size() == 0) {
                 return null;
             }
-            final Map<String, LatchThread> mapHandle = inputMap;
-            Date before = new Date();
+            final Map<String, InputMapValue<Object>> mapHandle = inputMap;
             List<Callable<Object>> callables = new ArrayList<Callable<Object>>();
             for (final String key : mapHandle.keySet()) {
-                Callable<Object> task = new Callable<Object>() {
-                    public Object call() throws Exception {
-                        return mapHandle.get(key).handle();
-                    }
-                };
-                callables.add(task);
+                callables.add(() -> {
+                    InputMapValue<Object> inputMapValue = mapHandle.get(key);
+                    LatchThread latchThread = inputMapValue.getLatchThread();
+                    Object m = inputMapValue.getM();
+                    return latchThread.handle(m);
+                });
             }
             List<Future<Object>> results = excutor.invokeAll(callables);
             if(results == null){
@@ -93,10 +88,42 @@ public class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             }
             return mapResult;
         }catch (Exception e){
-            e.printStackTrace();
+            //todo 后续可以增加一个兜底策略，当报错时走备份方案
             throw e;
         }finally {
             LatchExcutorBlockingQueueManager.takeExcutor(excutor);
+        }
+    }
+
+
+    @Override
+    public <T> T get(String taskName, Class<T> clazz){
+        if(mapResult.containsKey(taskName)){
+            return (T)mapResult.get(taskName);
+        }else{
+            throw new IllegalArgumentException("未知的任务名称:"+taskName);
+        }
+    }
+
+
+    private static class InputMapValue<M>{
+        private LatchThread latchThread;
+        private M m;
+
+        public LatchThread getLatchThread() {
+            return latchThread;
+        }
+
+        public void setLatchThread(LatchThread latchThread) {
+            this.latchThread = latchThread;
+        }
+
+        public M getM() {
+            return m;
+        }
+
+        public void setM(M m) {
+            this.m = m;
         }
     }
 }

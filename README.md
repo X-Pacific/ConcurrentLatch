@@ -25,9 +25,21 @@ ConcurrentLatch是一个基于JDK的多线程归类并发处理闩工具(基于J
 
 ### 2019-06-12[1.2-SNAPSHOT]
 1. 添加了若干注释
+
 1. 重写了线程池管理机制，原有机制是每次使用完线程池会把线程池销毁，当再次使用并发闩时需要重建线程池，这是个糟糕的实现，因为他没有很好的利用线程池节省资源的思想，本次调整后，线程池可以缓存，使用完毕的线程池可以“归还”给一个闲置的线程池列表
+
 1. 添加了若干配置，优化了线程池创建的方式，并在本文档中详细说明配置功能以及如何根据实际业务场景以及硬件情况定制线程池配置
+
 1. 本次修改未涉及API的改动
+
+### 2021-01-28[2.0-SNAPSHOT]
+
+   1. 添加了参数线程、线程池策略配置的功能
+   1. 重构了调用出入参的实现，去掉原有通过构造方法入参的方式，增加通过put方法入参的方式
+   1. 增加了泛型的支持
+   1. 增加了获取返回结果方法的支持
+   2. 优化了异常抛出的方式
+   3. 移除了原有通过注解标识任务名称的方式
 
 
 ## 使用ConcurrentLatch
@@ -38,140 +50,179 @@ ConcurrentLatch不依赖任何三方jar包，如果您使用的是Maven，那么
 <dependency>
     <groupId>org.zxp</groupId>
     <artifactId>concurrentLatch</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
 </dependency>
 ```
 
 
 ### 业务实现类定制
-您需要做的只是实现LatchThread接口，并将业务代码写入handle方法，如果有需要传入的对象或信息，可以通过构造方法传参的方式传入
+您需要做的只是实现LatchThread接口，并将业务代码写入handle方法
+有入参的例子
 ```
-public class RuleLatch implements  LatchThread {
-    RuleDto dto = null;
-    /**通过构造方法传递入参*/
-    public RuleLatch(RuleDto args){
-        dto = args;
-    }
-    /**你的业务处理*/
-    public RuleDto handle() {
+public class RuleLatch implements LatchThread<RuleQo,RuleDto> {
+    @Override
+    public RuleDto handle(RuleQo ruleQo) {
+        System.out.println("我是RuleLatch");
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        RuleDto dto = new RuleDto();
+        dto.setRuleID(ruleQo.getRuleID());
         dto.setMmmm(dto.getMmmm()+ 9999);
         return dto;
     }
 }
 ```
+```
+public class RuleQo {
+    private String ruleID = "";
 
-还可以通过下面注解（或成员变量）的方式来标识业务的名称，但我们并不建议您这样做，因为这样会导致这个业务类不能以多个不同名称的任务来运行
-```
-/**添加这个类运行的任务名，注意这个名字在一次线程池运行中不可重复*/
-/**也可以不配置注解，写一个名为TASKNAME的字符串成员变量也可行*/
-@LatchTaskName("rule")
-public class RuleLatch implements  LatchThread {
-    RuleDto dto = null;
-    /**通过构造方法传递入参*/
-    public RuleLatch(RuleDto args){
-        dto = args;
+    public String getRuleID() {
+        return ruleID;
     }
-    /**你的业务处理*/
-    public RuleDto handle() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        dto.setMmmm(dto.getMmmm()+ 9999);
-        return dto;
+
+    public void setRuleID(String ruleID) {
+        this.ruleID = ruleID;
     }
 }
-/**添加这个类运行的任务名，注意这个名字在一次线程池运行中不可重复*/
-/**也可以不配置注解，写一个名为TASKNAME的字符串成员变量也可行*/
-/**返回对象配置的注解值必须和对应的LatchThread实现类一致，否则无法获取返回值对应关系*/
-@LatchTaskName("rule")
+```
+```
 public class RuleDto {
-……
+    public String getRuleID() {
+        return ruleID;
+    }
+
+    @Override
+    public String toString() {
+        return "RuleDto{" +
+                "ruleID='" + ruleID + '\'' +
+                ", mmmm=" + mmmm +
+                '}';
+    }
+    public void setRuleID(String ruleID) {
+        this.ruleID = ruleID;
+    }
+
+    public double getMmmm() {
+        return mmmm;
+    }
+
+    public void setMmmm(double mmmm) {
+        this.mmmm = mmmm;
+    }
+
+    private String ruleID = "";
+    private double mmmm;
 }
 ```
-### 编写调用
+无入参的例子
+```
+public class PlatformLatch implements LatchThread<Void ,PlatformDto> {
+    @Override
+    public PlatformDto handle(Void v) {
+        System.out.println("我是PlatformLatch");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        PlatformDto dto = new PlatformDto();
+        dto.setName("0516");
+        dto.setPremium(6500.98);
+        dto.setPolicyNo("000000000001");
+        return dto;
+    }
+}
+```
+```
+public class PlatformDto {
+    private String name = "";
+
+    public String getName() {
+        return name;
+    }
+
+        @Override
+        public String toString() {
+            return "PlatformDto{" +
+                    "name='" + name + '\'' +
+                    ", premium=" + premium +
+                    ", policyNo='" + policyNo + '\'' +
+                    '}';
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public double getPremium() {
+        return premium;
+    }
+
+    public void setPremium(double premium) {
+        this.premium = premium;
+    }
+
+    public String getPolicyNo() {
+        return policyNo;
+    }
+
+    public void setPolicyNo(String policyNo) {
+        this.policyNo = policyNo;
+    }
+
+    private double premium;
+    private String policyNo = "";
+}
+```
+### Quick Start 编写调用
 
 ```
-/**创建一个ConcurrentLatch执行器*/
+//配置ConcurrentLatch（全局只能配置一次）
+ConcurrentLatchExcutorFactory.init(
+ConcurrentLatchCfg.builder()
+.maxCorePoolSize(10)
+.maxExcutorSize(10)
+.maxPoolSizeRatio(2).build()
+);
+//获取一个ConcurrentLatch执行器
 ConcurrentLatch excutor = ConcurrentLatchExcutorFactory.getConcurrentLatch();
-/**也可以通过其他静态方法获取其他的ConcurrentLatch*/
-//ConcurrentLatch excutorproxy = ConcurrentLatchExcutorFactory.getConcurrentLatch(ConcurrentLatchExcutorFactory.ExcutorType.PROXY);
-/**组织需要并发的业(任)务(务)类对象*/
-LatchThread platformLatchThread = new PlatformLatch();//业务类A
-RuleDto ruleDto = new RuleDto();
-ruleDto.setRuleID("zxp123");
-ruleDto.setMmmm(0.00001);
-LatchThread ruleLatchThread = new RuleLatch(ruleDto);//业务类B
-/**将任务推入ConcurrentLatch执行器*/
-excutor.put(platformLatchThread,"AAA");
-excutor.put(ruleLatchThread,"BBB");
-/**可以把一个之前已经有的业务组件再放入池中，只需要名称不重复即可，当然你可以可以重新new一个*/
-excutor.put(platformLatchThread,"CCC");
-/**通知ConcurrentLatch执行器开始执行所有推入的任务*/
-/**这里主线程或调用线程会挂起，直到所有任务都执行完毕*/
-Map<String, Object> map = excutor.excute();
-/**获取返回值*/
-/**这里的key就是上面在注解(LatchTaskName)或者TASKNAME配置的值，能轻松的获取所有的返回对象*/
-for (String key : map.keySet()) {
-    Object out = map.get(key);
-}
-```
-注解方式标注任务名称的调用稍有不同
+//声明RuleLatch
+RuleQo ruleQo = new RuleQo();
+ruleQo.setRuleID("zxp123");
+LatchThread ruleLatchThread = new RuleLatch();
+//声明PlatformLatch
+LatchThread platformLatchThread = new PlatformLatch();
+//将LatchThread（任务）置入ConcurrentLatch框架
+excutor.put(platformLatchThread,"platformLatch",null);
+excutor.put(ruleLatchThread,"ruleLatch",ruleQo);
+//执行全部任务
+excutor.excute();
+//获取返回结果
+PlatformDto platformDto = excutor.get("platformLatch",PlatformDto.class);
+RuleDto ruleDto = excutor.get("ruleLatch",RuleDto.class);
+System.out.println("platformLatch");
+System.out.println(platformDto);
 
+System.out.println("ruleLatch");
+System.out.println(ruleDto);
 ```
-/**创建一个ConcurrentLatch执行器，不同点*/
-ConcurrentLatch excutor =
-ConcurrentLatchExcutorFactory.getConcurrentLatch(ConcurrentLatchExcutorFactory.ExcutorType.NORMAL);
-/**组织需要并发的业(任)务(务)类对象*/
-LatchThread platformLatchThread = new PlatformLatch();//业务类A
-RuleDto ruleDto = new RuleDto();
-ruleDto.setRuleID("zxp123");
-ruleDto.setMmmm(0.00001);
-LatchThread ruleLatchThread = new RuleLatch(ruleDto);//业务类B
-/**将任务推入ConcurrentLatch执行器，不同点是这里只有一个入参*/
-excutor.put(platformLatchThread);
-excutor.put(ruleLatchThread);
-/**不可以把一个之前已经有的业务组件再放入池中，即使你重新new了一个实例也不允许，这也是为什么我们不推荐使用这种方式的原因*/
-/**通知ConcurrentLatch执行器开始执行所有推入的任务*/
-/**这里主线程或调用线程会挂起，直到所有任务都执行完毕*/
-Map<String, Object> map = excutor.excute();
-/**获取返回值*/
-/**这里的key就是上面在注解(LatchTaskName)或者TASKNAME配置的值，能轻松的获取所有的返回对象*/
-/**再一次强调，必须把handle方法返回的类配置与对应的LatchThread实现类一致的注解任务名称，否则无法正常获取对应关系*/
-for (String key : map.keySet()) {
-    Object out = map.get(key);
-}
-```
-执行结果
-```
-我是BBB
-我是AAA
-我是AAA
-taskname==========aaa
-PlatformDto{name='0516', premium=6500.98, policyNo='000000000001'}
-taskname==========ccc
-PlatformDto{name='0516', premium=6500.98, policyNo='000000000001'}
-taskname==========bbb
-RuleDto{ruleID='zxp123', mmmm=9999.00001}
-```
+
 ### 打印线程池情况快照
 
 ```
-LatchExcutorBlockingQueueManager.print();
+ConcurrentLatchExcutorFactory.print();
 ```
 
 
 ## 配置说明
 
-配置详见org.zxp.ConcurrentLatch.Constants
-
+需要通过`org.zxp.ConcurrentLatch.ConcurrentLatchExcutorFactory#init`方法配置，全局只能配置一次（第二次配置报错）
+默认配置详见org.zxp.ConcurrentLatch.Constants
 调用详见org.zxp.ConcurrentLatch.LatchExcutorBlockingQueueManager#getExcutor
+
 ### MAX_CORE_POOL_SIZE
 ```
 /**
@@ -232,7 +283,7 @@ public static final int MAX_EXCUTOR_SIZE= 20;
 
 2、再持续等待50ms获取线程池
 
-3、如果仍无法获得线程池资源执行失败策略（详见下面AFTER_TRY_BLOCK配置）
+3、如果仍无法获得线程池资源执行失败策略（详见下面`AFTER_TRY_BLOCK`配置）
 
 
 ### AFTER_TRY_BLOCK
@@ -250,8 +301,8 @@ false为直接抛出异常，丢弃当前任务
 
 ## 关键逻辑说明
 
-1. ConcurrentLatchExcutor中调用了线程池管理器来获取线程池
+1. `ConcurrentLatchExcutor`中调用了线程池管理器来获取线程池
 1. 通过Future获取线程执行获得返回对象
-1. LatchExcutorBlockingQueueManager线程池管理器中通过阻塞队列来监控线程池的使用情况，线程池使用完成后不销毁，而是归还可用线程池队列，当可用线程池队列为空则无法获取线程池并执行相关失败策略，
+1. `LatchExcutorBlockingQueueManager`线程池管理器中通过阻塞队列来监控线程池的使用情况，线程池使用完成后不销毁，而是归还可用线程池队列，当可用线程池队列为空则无法获取线程池并执行相关失败策略，
 1. 代理方式put任务时，内部会将任务返回对象包装为map以绑定任务名称（JDK）[2017-11-25]
-1. 相关测试代码详见org.zxp.ConcurrentLatch.demo.TestProxy#main
+1. 相关测试代码详见`org.zxp.ConcurrentLatch.demo.TestProxy#main`

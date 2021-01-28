@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @program: ConcurrentLatch
- * @description:
+ * @description: 这个LatchThread演示阻塞1秒的任务
  * @author: X-Pacific zhang
  * @create: 2019-06-12 10:09
  **/
@@ -14,7 +14,7 @@ public class BlockLatch implements LatchThread {
     static volatile Integer index = 0;
 
     @Override
-    public Object handle() {
+    public Object handle(Object obj) {
         try {
             TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
@@ -23,7 +23,6 @@ public class BlockLatch implements LatchThread {
         synchronized (BlockLatch.class){
             index ++;
         }
-//        System.out.println(Thread.currentThread().getName());
         return index;
     }
 }

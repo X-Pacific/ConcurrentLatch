@@ -6,7 +6,7 @@ import java.util.concurrent.*;
 /**
  * 通过阻塞队列实现的线程池管理器
  */
-public class LatchExcutorBlockingQueueManager {
+class LatchExcutorBlockingQueueManager {
 
     //无任务执行的线程池
     public static volatile BlockingQueue<ExecutorService> freeQueue = new LinkedBlockingQueue<ExecutorService>(Constants.MAX_EXCUTOR_SIZE);
@@ -91,20 +91,5 @@ public class LatchExcutorBlockingQueueManager {
             excutor = null;
             throw new InterruptedException("freeQueue offer error freeQueue size is" + freeQueue.size());
         }
-    }
-
-    /**
-     * 打印当前快照信息
-     */
-    public static void print(){
-        System.out.println("===================SNAPSHOT===================");
-        System.out.println("Map Info:");
-        System.out.println("Map size:"+excutorNameMap.size());
-        for (Map.Entry<Integer,ExecutorService> entry : excutorNameMap.entrySet()){
-            System.out.println("excutorname : " + entry.getKey() + " excutor : " + entry.getValue());
-        }
-        System.out.println("freeQueue size  : " + freeQueue.size());
-        System.out.println("incr : " + incr);
-        System.out.println("===================SNAPSHOT===================");
     }
 }

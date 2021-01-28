@@ -1,8 +1,5 @@
 package org.zxp.ConcurrentLatch.demo.dto;
 
-import org.zxp.ConcurrentLatch.LatchTaskName;
-
-@LatchTaskName("rule")
 public class RuleDto {
     public String getRuleID() {
         return ruleID;

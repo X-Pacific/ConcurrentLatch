@@ -9,9 +9,10 @@ import java.util.Map;
 /**
  * 代理对象生成类
  */
-public class ConcurrentLatchBeanFactory implements InvocationHandler{
+class ConcurrentLatchBeanFactory implements InvocationHandler{
     private Object target;
     private String key = "";
+    private Object in = null;
 
     /**
      * 绑定委托对象并返回一个代理类
@@ -19,9 +20,10 @@ public class ConcurrentLatchBeanFactory implements InvocationHandler{
      * @param pKey 任务代号
      * @return
      */
-    public LatchThread getBean(Object target,String pKey) throws Exception {
+    public LatchThread getBean(Object target,String pKey,Object in) throws Exception {
         this.key = pKey;
         this.target = target;
+        this.in = in;
         LatchThread proxyInstance = (LatchThread)Proxy.newProxyInstance(target.getClass().getClassLoader(),
                 target.getClass().getInterfaces(), this);
         //取得代理对象
@@ -39,7 +41,7 @@ public class ConcurrentLatchBeanFactory implements InvocationHandler{
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Object result = null;
-        result = method.invoke(target, null);
+        result = method.invoke(target, in);
         Map<String,Object> map = new HashMap<String,Object>();
         map.put(this.key,result);
         return map;
