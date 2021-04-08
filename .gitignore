@@ -3,6 +3,7 @@ HELP.md
 !.mvn/wrapper/maven-wrapper.jar
 *.class
 *.log
+
 ### STS ###
 .apt_generated
 .classpath
@@ -11,6 +12,7 @@ HELP.md
 .settings
 .springBeans
 .sts4-cache
+
 
 ### IntelliJ IDEA ###
 .idea
