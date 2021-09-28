@@ -45,6 +45,17 @@ public class TestProxy {
         System.out.println(ruleDto);
 
         ConcurrentLatchExcutorFactory.print();
+
+        RuleQo ruleQo4 = new RuleQo();
+        ruleQo4.setRuleID("zxp4");
+        RuleQo ruleQo5 = new RuleQo();
+        ruleQo5.setRuleID("zxp5");
+        RuleQo ruleQo6 = new RuleQo();
+        ruleQo6.setRuleID("zxp6");
+        excutor.put(ruleLatchThread,"ruleLatch", Arrays.asList(ruleQo4,ruleQo5,ruleQo6));
+        excutor.excute();
+        RuleDto ruleDto2 = excutor.get("ruleLatch",RuleDto.class);
+        System.out.println(ruleDto2);
     }
 
     ///**

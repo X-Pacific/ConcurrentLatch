@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * 通过代理方式设置任务key
@@ -38,6 +39,22 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
         /**把入参也放入map以便调用时传入*/
         InputMapValue<List> inputMapValue = new InputMapValue<>();
         LatchThread latchThreadProxy = beanFactory.getBean(latchThread,taskName,m);
+        inputMapValue.setLatchThread(latchThreadProxy);
+        inputMapValue.setM(m);
+        inputMap.put(taskname,inputMapValue);
+    }
+
+    @Override
+    public <T, M> void put(LatchThread<T, M> latchThread, List<Object> m) throws Exception {
+        String taskname = UUID.randomUUID().toString();
+        while(inputMap.containsKey(taskname)){
+            taskname = UUID.randomUUID().toString();
+        }
+        /**代理类生成组件 必须每次重新初始化*/
+        ConcurrentLatchBeanFactory beanFactory = new ConcurrentLatchBeanFactory();
+        /**把入参也放入map以便调用时传入*/
+        InputMapValue<List> inputMapValue = new InputMapValue<>();
+        LatchThread latchThreadProxy = beanFactory.getBean(latchThread,taskname,m);
         inputMapValue.setLatchThread(latchThreadProxy);
         inputMapValue.setM(m);
         inputMap.put(taskname,inputMapValue);
@@ -92,6 +109,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             throw e;
         }finally {
             LatchExcutorBlockingQueueManager.takeExcutor(excutor);
+            clean();
         }
     }
 
@@ -103,6 +121,14 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
         }else{
             throw new IllegalArgumentException("未知的任务名称:"+taskName);
         }
+    }
+
+    @Override
+    public List getAll() {
+        if(mapResult != null){
+            return mapResult.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
+        }
+        return null;
     }
 
 

@@ -12,6 +12,14 @@ public interface ConcurrentLatch {
     public <T,M> void put(LatchThread<T,M> latchThread, String taskName, List<Object> m) throws Exception ;
 
     /**
+     * 插入一个任务
+     * @param latchThread
+     * @throws Exception
+     */
+    public <T,M> void put(LatchThread<T,M> latchThread, List<Object> m) throws Exception ;
+
+
+    /**
      * 清除所有任务
      */
     public void clean();
@@ -36,4 +44,11 @@ public interface ConcurrentLatch {
      * @return
      */
     public <T> T get(String taskName,Class<T> clazz);
+
+    /**
+     * 根据任务名称获取返回结果
+     * @param <T>
+     * @return
+     */
+    public List getAll();
 }
