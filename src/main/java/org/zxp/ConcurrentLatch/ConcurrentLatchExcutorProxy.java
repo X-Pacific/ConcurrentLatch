@@ -92,6 +92,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             throw e;
         }finally {
             LatchExcutorBlockingQueueManager.takeExcutor(excutor);
+            clean();
         }
     }
 
