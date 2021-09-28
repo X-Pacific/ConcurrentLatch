@@ -7,6 +7,8 @@ import org.zxp.ConcurrentLatch.demo.dto.RuleQo;
 import org.zxp.ConcurrentLatch.demo.service.PlatformLatch;
 import org.zxp.ConcurrentLatch.demo.service.RuleLatch;
 
+import java.util.Arrays;
+
 public class TestProxy {
     public static void main(String[] args) throws Exception {
         //配置ConcurrentLatch（全局只能配置一次）
@@ -20,13 +22,17 @@ public class TestProxy {
         ConcurrentLatch excutor = ConcurrentLatchExcutorFactory.getConcurrentLatch();
         //声明RuleLatch
         RuleQo ruleQo = new RuleQo();
-        ruleQo.setRuleID("zxp123");
+        ruleQo.setRuleID("zxp1");
+        RuleQo ruleQo2 = new RuleQo();
+        ruleQo2.setRuleID("zxp2");
+        RuleQo ruleQo3 = new RuleQo();
+        ruleQo3.setRuleID("zxp3");
         LatchThread ruleLatchThread = new RuleLatch();
         //声明PlatformLatch
         LatchThread platformLatchThread = new PlatformLatch();
         //将LatchThread（任务）置入ConcurrentLatch框架
         excutor.put(platformLatchThread,"platformLatch",null);
-        excutor.put(ruleLatchThread,"ruleLatch",ruleQo);
+        excutor.put(ruleLatchThread,"ruleLatch", Arrays.asList(ruleQo,ruleQo2,ruleQo3));
         //执行全部任务
         excutor.excute();
         //获取返回结果

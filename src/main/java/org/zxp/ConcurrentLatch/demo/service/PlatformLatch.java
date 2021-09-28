@@ -3,6 +3,8 @@ package org.zxp.ConcurrentLatch.demo.service;
 import org.zxp.ConcurrentLatch.LatchThread;
 import org.zxp.ConcurrentLatch.demo.dto.PlatformDto;
 
+import java.util.List;
+
 /**
  * @program: ConcurrentLatch
  * @description: 这个LatchThread演示无入参有返回值
@@ -12,7 +14,7 @@ import org.zxp.ConcurrentLatch.demo.dto.PlatformDto;
 public class PlatformLatch implements LatchThread<Void ,PlatformDto> {
 
     @Override
-    public PlatformDto handle(Void v) {
+    public PlatformDto handle(List<Void> v) {
         System.out.println("我是PlatformLatch");
         try {
             Thread.sleep(1000);

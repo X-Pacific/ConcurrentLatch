@@ -13,12 +13,12 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
     /** 线程池 不能是单例，否则有事物问题*/
     private ExecutorService excutor = null;
     /**入参的map*/
-    private Map<String,InputMapValue<Object>> inputMap = null;
+    private Map<String,InputMapValue<List>> inputMap = null;
     /**出参的map*/
     private Map<String ,Object> mapResult = new HashMap<String,Object>();
 
     public ConcurrentLatchExcutorProxy(){
-        inputMap = new HashMap<String,InputMapValue<Object>>();
+        inputMap = new HashMap<>();
     }
 
     /**
@@ -28,7 +28,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
      * @throws Exception
      */
     @Override
-    public void put(LatchThread latchThread,String taskName,Object m) throws Exception {
+    public <T, M> void put(LatchThread<T, M> latchThread, String taskName, List<Object> m) throws Exception {
         String taskname = taskName;
         if(inputMap.containsKey(taskname)){
             throw new IllegalArgumentException("不能添加重复的任务");
@@ -36,7 +36,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
         /**代理类生成组件 必须每次重新初始化*/
         ConcurrentLatchBeanFactory beanFactory = new ConcurrentLatchBeanFactory();
         /**把入参也放入map以便调用时传入*/
-        InputMapValue<Object> inputMapValue = new InputMapValue<Object>();
+        InputMapValue<List> inputMapValue = new InputMapValue<>();
         LatchThread latchThreadProxy = beanFactory.getBean(latchThread,taskName,m);
         inputMapValue.setLatchThread(latchThreadProxy);
         inputMapValue.setM(m);
@@ -63,13 +63,13 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             if (inputMap == null || inputMap.size() == 0) {
                 return null;
             }
-            final Map<String, InputMapValue<Object>> mapHandle = inputMap;
+            final Map<String, InputMapValue<List>> mapHandle = inputMap;
             List<Callable<Object>> callables = new ArrayList<Callable<Object>>();
             for (final String key : mapHandle.keySet()) {
                 callables.add(() -> {
-                    InputMapValue<Object> inputMapValue = mapHandle.get(key);
+                    InputMapValue<List> inputMapValue = mapHandle.get(key);
                     LatchThread latchThread = inputMapValue.getLatchThread();
-                    Object m = inputMapValue.getM();
+                    List m = inputMapValue.getM();
                     return latchThread.handle(m);
                 });
             }
@@ -108,7 +108,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
 
     private static class InputMapValue<M>{
         private LatchThread latchThread;
-        private M m;
+        private List m;
 
         public LatchThread getLatchThread() {
             return latchThread;
@@ -118,11 +118,11 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             this.latchThread = latchThread;
         }
 
-        public M getM() {
+        public List<M> getM() {
             return m;
         }
 
-        public void setM(M m) {
+        public void setM(List m) {
             this.m = m;
         }
     }

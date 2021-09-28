@@ -2,6 +2,7 @@ package org.zxp.ConcurrentLatch.demo.service;
 
 import org.zxp.ConcurrentLatch.LatchThread;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -14,7 +15,7 @@ public class BlockLatch implements LatchThread {
     static volatile Integer index = 0;
 
     @Override
-    public Object handle(Object obj) {
+    public Object handle(List m) {
         try {
             TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {

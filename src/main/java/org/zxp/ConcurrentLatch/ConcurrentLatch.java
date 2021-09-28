@@ -1,5 +1,6 @@
 package org.zxp.ConcurrentLatch;
 
+import java.util.List;
 import java.util.Map;
 
 public interface ConcurrentLatch {
@@ -8,7 +9,7 @@ public interface ConcurrentLatch {
      * @param latchThread
      * @throws Exception
      */
-    public <T,M> void put(LatchThread<T,M> latchThread,String taskName,M m) throws Exception ;
+    public <T,M> void put(LatchThread<T,M> latchThread, String taskName, List<Object> m) throws Exception ;
 
     /**
      * 清除所有任务
