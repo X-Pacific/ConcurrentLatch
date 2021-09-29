@@ -1,9 +1,11 @@
 package org.zxp.ConcurrentLatch.demo.service;
 
 import org.zxp.ConcurrentLatch.LatchThread;
+import org.zxp.ConcurrentLatch.LatchThreadReturn;
 import org.zxp.ConcurrentLatch.demo.dto.RuleDto;
 import org.zxp.ConcurrentLatch.demo.dto.RuleQo;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,16 +17,20 @@ import java.util.stream.Collectors;
  **/
 public class RuleLatch implements LatchThread<RuleQo,RuleDto> {
     @Override
-    public RuleDto handle(List<RuleQo> ruleQo) {
+    public LatchThreadReturn<RuleDto> handle(List<RuleQo> ruleQo) {
         System.out.println("我是RuleLatch");
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        RuleDto dto = new RuleDto();
-        dto.setRuleID(ruleQo.stream().map(RuleQo::getRuleID).collect(Collectors.joining(",")));
-        dto.setMmmm(dto.getMmmm()+ 9999);
-        return dto;
+        List<RuleDto> ls = new ArrayList<>();
+        ruleQo.forEach(s -> {
+            RuleDto dto = new RuleDto();
+            dto.setRuleID(s.getRuleID()+"已处理");
+            dto.setMmmm(dto.getMmmm()+ 9999);
+            ls.add(dto);
+        });
+        return LatchThreadReturn.returnLatchThreadReturn(ls);
     }
 }

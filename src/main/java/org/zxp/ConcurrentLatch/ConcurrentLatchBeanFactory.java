@@ -1,6 +1,7 @@
 package org.zxp.ConcurrentLatch;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ class ConcurrentLatchBeanFactory implements InvocationHandler{
      * @param pKey 任务代号
      * @return
      */
-    public LatchThread getBean(Object target,String pKey,Object in) throws Exception {
+    public LatchThread getBean(Object target,String pKey,Object in)  {
         this.key = pKey;
         this.target = target;
         this.in = in;
@@ -39,9 +40,13 @@ class ConcurrentLatchBeanFactory implements InvocationHandler{
      * @throws Throwable
      */
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) {
         Object result = null;
-        result = method.invoke(target, in);
+        try {
+            result = method.invoke(target, in);
+        } catch (Exception e) {
+            throw new ConcurrentLatchException("reflect invoke exception",e);
+        }
         Map<String,Object> map = new HashMap<String,Object>();
         map.put(this.key,result);
         return map;

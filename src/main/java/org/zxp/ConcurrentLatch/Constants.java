@@ -27,6 +27,11 @@ class Constants {
      */
     static boolean AFTER_TRY_BLOCK = true;
 
+    /**
+     * 最大等待获取线程池的数量
+     */
+    static int DANGER_WAIT_COUNT = 10;
+
 
 
 

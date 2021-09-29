@@ -2,18 +2,27 @@ package org.zxp.ConcurrentLatch;
 
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 通过阻塞队列实现的线程池管理器
  */
 class LatchExcutorBlockingQueueManager {
+    private static Logger logger = LoggerFactory.getLogger(LatchExcutorBlockingQueueManager.class);
 
-    //无任务执行的线程池
-    public static volatile BlockingQueue<ExecutorService> freeQueue = new LinkedBlockingQueue<ExecutorService>(Constants.MAX_EXCUTOR_SIZE);
-    //线程池以及其名字
-    public static volatile Map<Integer,ExecutorService> excutorNameMap = new ConcurrentHashMap<Integer, ExecutorService>();
-    //当前最大线程池标号
-    public static int incr = 0;
+    //无任务执行的线程池，用于控制归还和复用线程池
+    private static volatile BlockingQueue<ExecutorService> freeQueue = new LinkedBlockingQueue<ExecutorService>(Constants.MAX_EXCUTOR_SIZE);
+    //线程池以及其名字，用于记录所有线程池的名字，只第一次创建线程池才会put
+    private static volatile Map<Integer,ExecutorService> excutorNameMap = new ConcurrentHashMap<Integer, ExecutorService>();
+    //正在执行（未释放）线程池数量
+    private static AtomicInteger inUseExcutorCount = new AtomicInteger(0);
+    //当前阻塞线程池数量
+    private static AtomicInteger blockCount = new AtomicInteger(0);
+    //已经执行线程池数量（可能已经释放，也可能未释放）
+    private static AtomicInteger alreadyExcuteCount = new AtomicInteger(0);
+
 
     /**
      * 获得一个线程池
@@ -21,7 +30,7 @@ class LatchExcutorBlockingQueueManager {
      * @return
      * @throws InterruptedException
      */
-    public static ExecutorService getExcutor(int threadCount) throws InterruptedException {
+    protected static ExecutorService getExcutor(int threadCount) throws InterruptedException {
         synchronized (freeQueue) {
             //先尝试获取一个空闲的线程池
             ExecutorService excutor = freeQueue.poll();
@@ -40,8 +49,9 @@ class LatchExcutorBlockingQueueManager {
                 }
                 excutor = new ThreadPoolExecutor(corepoolsize, threadCount*Constants.MAX_POOL_SIZE_RATIO
                         , 60, TimeUnit.SECONDS, queue);
+                inUseExcutorCount.addAndGet(1);
+                int current = alreadyExcuteCount.addAndGet(1);
                 //并为其命名
-                int current = ++incr;
                 excutorNameMap.put(current,excutor);
                 return excutor;
             }
@@ -62,18 +72,24 @@ class LatchExcutorBlockingQueueManager {
                 }else {
                     //再不成功，根据配置决定挂起还是抛弃
                     if(Constants.AFTER_TRY_BLOCK) {
+                        int newBlockCount = blockCount.addAndGet(1);
+                        if(newBlockCount > Constants.DANGER_WAIT_COUNT){
+                            throw new ConcurrentLatchException("over max wait excutor counts");
+                        }
                         //等待获取excutor
                         excutor = freeQueue.take();
                         if(excutor != null) {
                             return excutor;
                         }else{
-                            throw new InterruptedException("freeQueue take error excutor is null");
+                            throw new ConcurrentLatchException("freeQueue take error excutor is null");
                         }
                     }else{
-                        throw new InterruptedException("can not poll a excutor");
+                        throw new ConcurrentLatchException("can not poll a excutor");
                     }
                 }
             }else{
+                inUseExcutorCount.addAndGet(1);
+                int current = alreadyExcuteCount.addAndGet(1);
                 return excutor;
             }
         }
@@ -84,12 +100,35 @@ class LatchExcutorBlockingQueueManager {
      * @param excutor
      * @throws InterruptedException
      */
-    public static void takeExcutor(ExecutorService excutor) throws InterruptedException {
+    protected static synchronized void takeExcutor(ExecutorService excutor) {
         boolean offer = freeQueue.offer(excutor);
         if (!offer) {//异常情况
             excutor.shutdown();
+            //help GC
             excutor = null;
-            throw new InterruptedException("freeQueue offer error freeQueue size is" + freeQueue.size());
+            logger.warn("freeQueue offer error freeQueue size is" + freeQueue.size());
         }
+        inUseExcutorCount.addAndGet(-1);
+        if(alreadyExcuteCount.get() > 0){
+            alreadyExcuteCount.addAndGet(-1);
+        }
+    }
+
+
+
+    protected static void print(){
+        String br = "\n";
+        StringBuffer sb = new StringBuffer();
+        sb.append("===================ConcurrentLatch Running Info===================").append(br);
+        sb.append("Excutor Map Info : ").append(br);
+        sb.append("Map size:"+LatchExcutorBlockingQueueManager.excutorNameMap.size());
+        for (Map.Entry<Integer, ExecutorService> entry : LatchExcutorBlockingQueueManager.excutorNameMap.entrySet()){
+            sb.append("excutorname : " + entry.getKey() + " excutor : " + entry.getValue()).append(br);
+        }
+        sb.append("【当前空闲线程池】freeQueue size : " + freeQueue.size()).append(br);
+        sb.append("【已经运行线程池】alreadyExcuteCount size : " + alreadyExcuteCount.get()).append(br);
+        sb.append("【正在运行线程池】inUseExcutorCount size : " + inUseExcutorCount.get()).append(br);
+        sb.append("【排队获取线程池】blockCount size : " + blockCount.get()).append(br);
+        sb.append("===================ConcurrentLatch Running Info===================");
     }
 }

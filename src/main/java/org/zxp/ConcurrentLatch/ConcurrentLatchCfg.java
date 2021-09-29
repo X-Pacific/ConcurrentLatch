@@ -27,11 +27,16 @@ public class ConcurrentLatchCfg {
      * 任务等待队列长度，有界时有效
      */
     private int limitsSize = 50;
-
     /**
      * 通过尝试后无法获得线程池资源，是否挂起等待（false抛出异常）
      */
     private boolean afterTryBlock = true;
+    /**
+     * 最大等待获取线程池的数量
+     */
+    private int dangerWaitCount = 10;
+
+
     public static Builder builder(){
         return new Builder();
     }
@@ -43,6 +48,7 @@ public class ConcurrentLatchCfg {
         private boolean hasLimits = false;
         private int limitsSize = 50;
         private boolean afterTryBlock = true;
+        private int dangerWaitCount = 1;
 
         public ConcurrentLatchCfg build(){
             return new ConcurrentLatchCfg();
@@ -77,6 +83,11 @@ public class ConcurrentLatchCfg {
             this.afterTryBlock = afterTryBlock;
             return this;
         }
+
+        public Builder dangerWaitCount(int dangerWaitCount){
+            this.dangerWaitCount = dangerWaitCount;
+            return this;
+        }
     }
 
 
@@ -102,5 +113,10 @@ public class ConcurrentLatchCfg {
 
     public boolean isAfterTryBlock() {
         return afterTryBlock;
+    }
+
+
+    public int getDangerWaitCount() {
+        return dangerWaitCount;
     }
 }
