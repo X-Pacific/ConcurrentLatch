@@ -1,8 +1,10 @@
 package org.zxp.ConcurrentLatch.demo.service;
 
 import org.zxp.ConcurrentLatch.LatchThread;
+import org.zxp.ConcurrentLatch.LatchThreadReturn;
 import org.zxp.ConcurrentLatch.demo.dto.PlatformDto;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -14,7 +16,7 @@ import java.util.List;
 public class PlatformLatch implements LatchThread<Void ,PlatformDto> {
 
     @Override
-    public PlatformDto handle(List<Void> v) {
+    public LatchThreadReturn<PlatformDto> handle(List<Void> v) {
         System.out.println("我是PlatformLatch");
         try {
             Thread.sleep(1000);
@@ -25,7 +27,7 @@ public class PlatformLatch implements LatchThread<Void ,PlatformDto> {
         dto.setName("0516");
         dto.setPremium(6500.98);
         dto.setPolicyNo("000000000001");
-        return dto;
+        return LatchThreadReturn.returnLatchThreadReturn(dto);
     }
 
 }

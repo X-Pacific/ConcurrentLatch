@@ -1,7 +1,9 @@
 package org.zxp.ConcurrentLatch.demo.service;
 
 import org.zxp.ConcurrentLatch.LatchThread;
+import org.zxp.ConcurrentLatch.LatchThreadReturn;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -15,7 +17,7 @@ public class BlockLatch implements LatchThread {
     static volatile Integer index = 0;
 
     @Override
-    public Object handle(List m) {
+    public LatchThreadReturn<Integer> handle(List m) {
         try {
             TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
@@ -24,6 +26,6 @@ public class BlockLatch implements LatchThread {
         synchronized (BlockLatch.class){
             index ++;
         }
-        return index;
+        return LatchThreadReturn.returnLatchThreadReturn(index);
     }
 }

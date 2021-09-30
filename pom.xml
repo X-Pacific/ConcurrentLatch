@@ -7,6 +7,13 @@
     <groupId>org.zxp</groupId>
     <artifactId>concurrentLatch</artifactId>
     <version>3.0-SNAPSHOT</version>
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
             <plugin>

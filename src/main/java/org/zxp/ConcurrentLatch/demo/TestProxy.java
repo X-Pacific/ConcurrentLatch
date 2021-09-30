@@ -8,6 +8,7 @@ import org.zxp.ConcurrentLatch.demo.service.PlatformLatch;
 import org.zxp.ConcurrentLatch.demo.service.RuleLatch;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class TestProxy {
     public static void main(String[] args) throws Exception {
@@ -36,8 +37,8 @@ public class TestProxy {
         //执行全部任务
         excutor.excute();
         //获取返回结果
-        PlatformDto platformDto = excutor.get("platformLatch",PlatformDto.class);
-        RuleDto ruleDto = excutor.get("ruleLatch",RuleDto.class);
+        List<PlatformDto> platformDto = excutor.get("platformLatch",PlatformDto.class);
+        List<RuleDto> ruleDto = excutor.get("ruleLatch",RuleDto.class);
         System.out.println("platformLatch");
         System.out.println(platformDto);
 
@@ -45,17 +46,6 @@ public class TestProxy {
         System.out.println(ruleDto);
 
         ConcurrentLatchExcutorFactory.print();
-
-        RuleQo ruleQo4 = new RuleQo();
-        ruleQo4.setRuleID("zxp4");
-        RuleQo ruleQo5 = new RuleQo();
-        ruleQo5.setRuleID("zxp5");
-        RuleQo ruleQo6 = new RuleQo();
-        ruleQo6.setRuleID("zxp6");
-        excutor.put(ruleLatchThread,"ruleLatch", Arrays.asList(ruleQo4,ruleQo5,ruleQo6));
-        excutor.excute();
-        RuleDto ruleDto2 = excutor.get("ruleLatch",RuleDto.class);
-        System.out.println(ruleDto2);
     }
 
     ///**

@@ -16,11 +16,14 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
     /**入参的map*/
     private Map<String,InputMapValue<List>> inputMap = null;
     /**出参的map*/
-    private Map<String ,Object> mapResult = new HashMap<String,Object>();
+    private Map<String ,List<LatchThreadReturn>> mapResult = null;
 
     public ConcurrentLatchExcutorProxy(){
         inputMap = new HashMap<>();
+        mapResult = new HashMap<>();
     }
+
+
 
     /**
      * 由代理调用，自动放入任务
@@ -29,7 +32,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
      * @throws Exception
      */
     @Override
-    public <T, M> void put(LatchThread<T, M> latchThread, String taskName, List<T> m) throws Exception {
+    public <T, M> void put(LatchThread<T, M> latchThread, String taskName, List<T> m) {
         String taskname = taskName;
         if(inputMap.containsKey(taskname)){
             throw new IllegalArgumentException("不能添加重复的任务");
@@ -45,7 +48,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
     }
 
     @Override
-    public <T, M> void put(LatchThread<T, M> latchThread, List<T> m) throws Exception {
+    public <T, M> void put(LatchThread<T, M> latchThread, List<T> m) {
         String taskname = UUID.randomUUID().toString();
         while(inputMap.containsKey(taskname)){
             taskname = UUID.randomUUID().toString();
@@ -60,28 +63,29 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
         inputMap.put(taskname,inputMapValue);
     }
 
-    @Override
-    public void clean() {
+    private void clean() {
         inputMap.clear();
+        mapResult.clear();
     }
 
     @Override
-    public void clean(String threadName) {
+    public void cleanTask(String threadName) {
         inputMap.remove(threadName);
     }
 
     @Override
-    public Map<String, Object> excute() throws Exception {
+    public <T> Map<String, List<LatchThreadReturn>> excute() {
         try {
             if (inputMap == null || inputMap.size() == 0) {
-                return null;
+                throw new ConcurrentLatchException("inputMap is null , please invoke function put");
             }
+            if(mapResult != null && mapResult.size() > 0){
+                throw new ConcurrentLatchException("mapResult is not null , please invoke function release");
+            }
+            //从线程池管理器（缓存）中获取一个excutor
             excutor = LatchExcutorBlockingQueueManager.getExcutor(inputMap.size());
-            if (inputMap == null || inputMap.size() == 0) {
-                return null;
-            }
             final Map<String, InputMapValue<List>> mapHandle = inputMap;
-            List<Callable<Object>> callables = new ArrayList<Callable<Object>>();
+            List<Callable<LatchThreadReturn<T>>> callables = new ArrayList<>();
             for (final String key : mapHandle.keySet()) {
                 callables.add(() -> {
                     InputMapValue<List> inputMapValue = mapHandle.get(key);
@@ -90,15 +94,15 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
                     return latchThread.handle(m);
                 });
             }
-            List<Future<Object>> results = excutor.invokeAll(callables);
+            List<Future<LatchThreadReturn<T>>> results = excutor.invokeAll(callables);
             if(results == null){
                 return null;
             }
-            for (Future<Object> f : results) {
+            for (Future f : results) {
                 if(f == null || f.get() == null){
                     continue;
                 }
-                Map<String,Object> map = (Map<String,Object>)f.get();
+                Map<String,List> map = (Map<String,List>)f.get();
                 for (String key : map.keySet()){
                     mapResult.put(key, map.get(key));
                 }
@@ -106,29 +110,35 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             return mapResult;
         }catch (Exception e){
             //todo 后续可以增加一个兜底策略，当报错时走备份方案
-            throw e;
+            throw new ConcurrentLatchException("ConcurrentLatchExcutorProxy excute exception",e);
         }finally {
             LatchExcutorBlockingQueueManager.takeExcutor(excutor);
-            clean();
         }
     }
 
 
     @Override
-    public <T> T get(String taskName, Class<T> clazz){
+    public <T> List<T> get(String taskName, Class<T> clazz){
         if(mapResult.containsKey(taskName)){
-            return (T)mapResult.get(taskName);
+            return (List<T>)mapResult.get(taskName);
         }else{
-            throw new IllegalArgumentException("未知的任务名称:"+taskName);
+            throw new ConcurrentLatchException("unknown taskName:"+taskName);
         }
     }
 
     @Override
-    public List getAll() {
+    public List<List> getAll() {
         if(mapResult != null){
             return mapResult.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
         }
+        clean();
         return null;
+    }
+
+    @Override
+    public void release() {
+        //清空inputmap\清空mapResult
+        clean();
     }
 
 

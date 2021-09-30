@@ -1,7 +1,5 @@
 package org.zxp.ConcurrentLatch;
 
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 组件获取工厂
@@ -26,6 +24,7 @@ public class ConcurrentLatchExcutorFactory {
         Constants.MAX_CORE_POOL_SIZE = concurrentLatchCfg.getMaxCorePoolSize();
         Constants.MAX_EXCUTOR_SIZE = concurrentLatchCfg.getMaxExcutorSize();
         Constants.MAX_POOL_SIZE_RATIO = concurrentLatchCfg.getMaxPoolSizeRatio();
+        Constants.DANGER_WAIT_COUNT = concurrentLatchCfg.getDangerWaitCount();
         initFlag = true;
     }
     /**
@@ -41,14 +40,6 @@ public class ConcurrentLatchExcutorFactory {
      * 打印当前快照信息
      */
     public static void print(){
-        System.out.println("===================SNAPSHOT===================");
-        System.out.println("Map Info:");
-        System.out.println("Map size:"+LatchExcutorBlockingQueueManager.excutorNameMap.size());
-        for (Map.Entry<Integer, ExecutorService> entry : LatchExcutorBlockingQueueManager.excutorNameMap.entrySet()){
-            System.out.println("excutorname : " + entry.getKey() + " excutor : " + entry.getValue());
-        }
-        System.out.println("freeQueue size  : " + LatchExcutorBlockingQueueManager.freeQueue.size());
-        System.out.println("incr : " + LatchExcutorBlockingQueueManager.incr);
-        System.out.println("===================SNAPSHOT===================");
+        LatchExcutorBlockingQueueManager.print();
     }
 }
