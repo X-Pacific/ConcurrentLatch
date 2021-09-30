@@ -9,14 +9,14 @@ public interface ConcurrentLatch {
      * @param latchThread
      * @throws Exception
      */
-    public <T,M> void put(LatchThread<T,M> latchThread, String taskName, List<Object> m) throws Exception ;
+    public <T,M> void put(LatchThread<T,M> latchThread, String taskName, List<T> m) throws Exception ;
 
     /**
      * 插入一个任务
      * @param latchThread
      * @throws Exception
      */
-    public <T,M> void put(LatchThread<T,M> latchThread, List<Object> m) throws Exception ;
+    public <T,M> void put(LatchThread<T,M> latchThread, List<T> m) throws Exception ;
 
 
     /**

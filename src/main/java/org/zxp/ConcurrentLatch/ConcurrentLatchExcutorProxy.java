@@ -29,7 +29,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
      * @throws Exception
      */
     @Override
-    public <T, M> void put(LatchThread<T, M> latchThread, String taskName, List<Object> m) throws Exception {
+    public <T, M> void put(LatchThread<T, M> latchThread, String taskName, List<T> m) throws Exception {
         String taskname = taskName;
         if(inputMap.containsKey(taskname)){
             throw new IllegalArgumentException("不能添加重复的任务");
@@ -45,7 +45,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
     }
 
     @Override
-    public <T, M> void put(LatchThread<T, M> latchThread, List<Object> m) throws Exception {
+    public <T, M> void put(LatchThread<T, M> latchThread, List<T> m) throws Exception {
         String taskname = UUID.randomUUID().toString();
         while(inputMap.containsKey(taskname)){
             taskname = UUID.randomUUID().toString();
