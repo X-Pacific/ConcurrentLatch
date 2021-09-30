@@ -38,7 +38,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             throw new IllegalArgumentException("不能添加重复的任务");
         }
         /**代理类生成组件 必须每次重新初始化*/
-        ConcurrentLatchBeanFactory beanFactory = new ConcurrentLatchBeanFactory();
+        ConcurrentLatchBeanFactory<T,M> beanFactory = new ConcurrentLatchBeanFactory();
         /**把入参也放入map以便调用时传入*/
         InputMapValue<List> inputMapValue = new InputMapValue<>();
         LatchThread latchThreadProxy = beanFactory.getBean(latchThread,taskName,m);
@@ -54,7 +54,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             taskname = UUID.randomUUID().toString();
         }
         /**代理类生成组件 必须每次重新初始化*/
-        ConcurrentLatchBeanFactory beanFactory = new ConcurrentLatchBeanFactory();
+        ConcurrentLatchBeanFactory<T,M> beanFactory = new ConcurrentLatchBeanFactory();
         /**把入参也放入map以便调用时传入*/
         InputMapValue<List> inputMapValue = new InputMapValue<>();
         LatchThread latchThreadProxy = beanFactory.getBean(latchThread,taskname,m);
@@ -85,7 +85,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             //从线程池管理器（缓存）中获取一个excutor
             excutor = LatchExcutorBlockingQueueManager.getExcutor(inputMap.size());
             final Map<String, InputMapValue<List>> mapHandle = inputMap;
-            List<Callable<LatchThreadReturn<T>>> callables = new ArrayList<>();
+            List<Callable<LatchThreadReturn>> callables = new ArrayList<>();
             for (final String key : mapHandle.keySet()) {
                 callables.add(() -> {
                     InputMapValue<List> inputMapValue = mapHandle.get(key);
@@ -94,7 +94,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
                     return latchThread.handle(m);
                 });
             }
-            List<Future<LatchThreadReturn<T>>> results = excutor.invokeAll(callables);
+            List<Future<LatchThreadReturn>> results = excutor.invokeAll(callables);
             if(results == null){
                 return null;
             }
@@ -102,10 +102,8 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
                 if(f == null || f.get() == null){
                     continue;
                 }
-                Map<String,List> map = (Map<String,List>)f.get();
-                for (String key : map.keySet()){
-                    mapResult.put(key, map.get(key));
-                }
+                LatchThreadReturn ret = (LatchThreadReturn)f.get();
+                mapResult.put(ret.getKey(), ret.get());
             }
             return mapResult;
         }catch (Exception e){

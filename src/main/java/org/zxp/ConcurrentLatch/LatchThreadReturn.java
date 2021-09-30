@@ -10,9 +10,10 @@ import java.util.List;
  * @create: 2021-09-29 06:15
  **/
 public class LatchThreadReturn<M> {
-    List<M> latchThreadReturn;
+    private List<M> latchThreadReturn;
+    private String key;
 
-    public List<M> getLatchThreadReturn() {
+    public List<M> get() {
         return latchThreadReturn;
     }
 
@@ -20,15 +21,23 @@ public class LatchThreadReturn<M> {
         this.latchThreadReturn = latchThreadReturn;
     }
 
-    public static <M> LatchThreadReturn returnLatchThreadReturn(M m){
+    public static <M> LatchThreadReturn set(M m){
         LatchThreadReturn<M> latchThreadReturn = new LatchThreadReturn<>();
         latchThreadReturn.setLatchThreadReturn(Arrays.asList(m));
         return latchThreadReturn;
     }
 
-    public static <M> LatchThreadReturn returnLatchThreadReturn(List<M> list){
+    public static <M> LatchThreadReturn set(List<M> list){
         LatchThreadReturn<M> latchThreadReturn = new LatchThreadReturn<>();
         latchThreadReturn.setLatchThreadReturn(list);
         return latchThreadReturn;
+    }
+
+    protected String getKey() {
+        return key;
+    }
+
+    protected void setKey(String key) {
+        this.key = key;
     }
 }

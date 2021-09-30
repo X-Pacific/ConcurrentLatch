@@ -7,8 +7,13 @@ import org.zxp.ConcurrentLatch.demo.dto.RuleQo;
 import org.zxp.ConcurrentLatch.demo.service.PlatformLatch;
 import org.zxp.ConcurrentLatch.demo.service.RuleLatch;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class TestProxy {
     public static void main(String[] args) throws Exception {
@@ -47,6 +52,20 @@ public class TestProxy {
 
         ConcurrentLatchExcutorFactory.print();
     }
+
+
+//    public static void main(String[] args) throws InterruptedException {
+//        ExecutorService executorService = Executors.newFixedThreadPool(2);
+//        List<Callable<LatchThreadReturn>> callables = new ArrayList<>();
+//        callables.add(()->{
+//            return LatchThreadReturn.set(Arrays.asList(1,2,3,4));
+//        });
+//        List<Future<LatchThreadReturn>> futures = executorService.invokeAll(callables);
+//        for (int i = 0; i < futures.size(); i++) {
+//            futures.get(i);
+//        }
+//
+//    }
 
     ///**
     // * 测试线程池管理器会不会被挤爆
@@ -201,4 +220,7 @@ public class TestProxy {
     //        e.printStackTrace();
     //    }
     //}
+
+
+
 }

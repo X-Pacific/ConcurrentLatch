@@ -26,6 +26,6 @@ public class BlockLatch implements LatchThread {
         synchronized (BlockLatch.class){
             index ++;
         }
-        return LatchThreadReturn.returnLatchThreadReturn(index);
+        return LatchThreadReturn.set(index);
     }
 }

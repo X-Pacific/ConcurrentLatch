@@ -1,19 +1,23 @@
 package org.zxp.ConcurrentLatch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * 代理对象生成类
  */
-class ConcurrentLatchBeanFactory implements InvocationHandler{
+class ConcurrentLatchBeanFactory<T,M> implements InvocationHandler{
+    private static Logger logger = LoggerFactory.getLogger(ConcurrentLatchBeanFactory.class);
     private Object target;
     private String key = "";
-    private Object in = null;
+    private List<T> in = null;
 
     /**
      * 绑定委托对象并返回一个代理类
@@ -21,7 +25,7 @@ class ConcurrentLatchBeanFactory implements InvocationHandler{
      * @param pKey 任务代号
      * @return
      */
-    public LatchThread getBean(Object target,String pKey,Object in)  {
+    public LatchThread getBean(Object target,String pKey,List<T> in)  {
         this.key = pKey;
         this.target = target;
         this.in = in;
@@ -40,15 +44,15 @@ class ConcurrentLatchBeanFactory implements InvocationHandler{
      * @throws Throwable
      */
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) {
-        Object result = null;
+    public LatchThreadReturn<M> invoke(Object proxy, Method method, Object[] args) {
+        LatchThreadReturn result = null;
         try {
-            result = method.invoke(target, in);
+            result = (LatchThreadReturn)method.invoke(target, in);
         } catch (Exception e) {
+            logger.error("reflect invoke exception",e);
             throw new ConcurrentLatchException("reflect invoke exception",e);
         }
-        Map<String,Object> map = new HashMap<String,Object>();
-        map.put(this.key,result);
-        return map;
+        result.setKey(key);
+        return result;
     }
 }

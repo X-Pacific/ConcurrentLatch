@@ -27,7 +27,7 @@ public class PlatformLatch implements LatchThread<Void ,PlatformDto> {
         dto.setName("0516");
         dto.setPremium(6500.98);
         dto.setPolicyNo("000000000001");
-        return LatchThreadReturn.returnLatchThreadReturn(dto);
+        return LatchThreadReturn.set(dto);
     }
 
 }

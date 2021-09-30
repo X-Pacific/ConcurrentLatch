@@ -31,6 +31,6 @@ public class RuleLatch implements LatchThread<RuleQo,RuleDto> {
             dto.setMmmm(dto.getMmmm()+ 9999);
             ls.add(dto);
         });
-        return LatchThreadReturn.returnLatchThreadReturn(ls);
+        return LatchThreadReturn.set(ls);
     }
 }
