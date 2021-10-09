@@ -35,7 +35,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
     public <T, M> void put(LatchThread<T, M> latchThread, String taskName, List<T> m) {
         String taskname = taskName;
         if(inputMap.containsKey(taskname)){
-            throw new IllegalArgumentException("不能添加重复的任务");
+            throw new ConcurrentLatchException("repeat task name");
         }
         /**代理类生成组件 必须每次重新初始化*/
         ConcurrentLatchBeanFactory<T,M> beanFactory = new ConcurrentLatchBeanFactory();

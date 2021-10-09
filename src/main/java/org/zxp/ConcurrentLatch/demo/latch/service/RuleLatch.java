@@ -1,13 +1,12 @@
-package org.zxp.ConcurrentLatch.demo.service;
+package org.zxp.ConcurrentLatch.demo.latch.service;
 
 import org.zxp.ConcurrentLatch.LatchThread;
 import org.zxp.ConcurrentLatch.LatchThreadReturn;
-import org.zxp.ConcurrentLatch.demo.dto.RuleDto;
-import org.zxp.ConcurrentLatch.demo.dto.RuleQo;
+import org.zxp.ConcurrentLatch.demo.latch.dto.RuleDto;
+import org.zxp.ConcurrentLatch.demo.latch.dto.RuleQo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @program: ConcurrentLatch

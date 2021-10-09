@@ -1,9 +1,8 @@
-package org.zxp.ConcurrentLatch.demo.service;
+package org.zxp.ConcurrentLatch.demo.latch.service;
 
 import org.zxp.ConcurrentLatch.LatchThread;
 import org.zxp.ConcurrentLatch.LatchThreadReturn;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 

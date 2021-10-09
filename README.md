@@ -1,7 +1,7 @@
 [toc]
 
 # ConcurrentLatch
-ConcurrentLatch是一个基于JDK的多线程归类并发处理闩工具(基于JDK1.6)
+ConcurrentLatch是一个基于JDK的多线程归类并发处理闩工具(基于JDK1.8)
 
 ## ConcurrentLatch使用场景
 
@@ -41,16 +41,20 @@ ConcurrentLatch是一个基于JDK的多线程归类并发处理闩工具(基于J
    2. 优化了异常抛出的方式
    3. 移除了原有通过注解标识任务名称的方式
 
+### 2021-10-09[3.0-SNAPSHOT]
+
+1. 统一调整出入参数为list，并且定义了出参的通用类
+1. 增加了一些对于已经put任务后对于任务处理的api
+1. 增加了一个单机mapreduce的封装类，简化并行代码量
 
 ## 使用ConcurrentLatch
-
-ConcurrentLatch不依赖任何三方jar包，如果您使用的是Maven，那么把ConcurrentLatch安装到中央仓库后，在pom文件中添加以下依赖
+在pom文件中添加以下依赖
 
 ```
 <dependency>
     <groupId>org.zxp</groupId>
     <artifactId>concurrentLatch</artifactId>
-    <version>2.0-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -61,17 +65,21 @@ ConcurrentLatch不依赖任何三方jar包，如果您使用的是Maven，那么
 ```
 public class RuleLatch implements LatchThread<RuleQo,RuleDto> {
     @Override
-    public RuleDto handle(RuleQo ruleQo) {
+    public LatchThreadReturn<RuleDto> handle(List<RuleQo> ruleQo) {
         System.out.println("我是RuleLatch");
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        RuleDto dto = new RuleDto();
-        dto.setRuleID(ruleQo.getRuleID());
-        dto.setMmmm(dto.getMmmm()+ 9999);
-        return dto;
+        List<RuleDto> ls = new ArrayList<>();
+        ruleQo.forEach(s -> {
+            RuleDto dto = new RuleDto();
+            dto.setRuleID(s.getRuleID()+"已处理");
+            dto.setMmmm(dto.getMmmm()+ 9999);
+            ls.add(dto);
+        });
+        return LatchThreadReturn.set(ls);
     }
 }
 ```
@@ -121,7 +129,7 @@ public class RuleDto {
 ```
 public class PlatformLatch implements LatchThread<Void ,PlatformDto> {
     @Override
-    public PlatformDto handle(Void v) {
+    public LatchThreadReturn<PlatformDto> handle(List<Void> v) {
         System.out.println("我是PlatformLatch");
         try {
             Thread.sleep(1000);
@@ -132,7 +140,7 @@ public class PlatformLatch implements LatchThread<Void ,PlatformDto> {
         dto.setName("0516");
         dto.setPremium(6500.98);
         dto.setPolicyNo("000000000001");
-        return dto;
+        return LatchThreadReturn.set(dto);
     }
 }
 ```
@@ -182,27 +190,31 @@ public class PlatformDto {
 ```
 //配置ConcurrentLatch（全局只能配置一次）
 ConcurrentLatchExcutorFactory.init(
-ConcurrentLatchCfg.builder()
-.maxCorePoolSize(10)
-.maxExcutorSize(10)
-.maxPoolSizeRatio(2).build()
+        ConcurrentLatchCfg.builder()
+            .maxCorePoolSize(10)
+            .maxExcutorSize(10)
+            .maxPoolSizeRatio(2).build()
 );
 //获取一个ConcurrentLatch执行器
 ConcurrentLatch excutor = ConcurrentLatchExcutorFactory.getConcurrentLatch();
 //声明RuleLatch
 RuleQo ruleQo = new RuleQo();
-ruleQo.setRuleID("zxp123");
+ruleQo.setRuleID("zxp1");
+RuleQo ruleQo2 = new RuleQo();
+ruleQo2.setRuleID("zxp2");
+RuleQo ruleQo3 = new RuleQo();
+ruleQo3.setRuleID("zxp3");
 LatchThread ruleLatchThread = new RuleLatch();
 //声明PlatformLatch
 LatchThread platformLatchThread = new PlatformLatch();
 //将LatchThread（任务）置入ConcurrentLatch框架
 excutor.put(platformLatchThread,"platformLatch",null);
-excutor.put(ruleLatchThread,"ruleLatch",ruleQo);
+excutor.put(ruleLatchThread,"ruleLatch", Arrays.asList(ruleQo,ruleQo2,ruleQo3));
 //执行全部任务
 excutor.excute();
 //获取返回结果
-PlatformDto platformDto = excutor.get("platformLatch",PlatformDto.class);
-RuleDto ruleDto = excutor.get("ruleLatch",RuleDto.class);
+List<PlatformDto> platformDto = excutor.get("platformLatch",PlatformDto.class);
+List<RuleDto> ruleDto = excutor.get("ruleLatch",RuleDto.class);
 System.out.println("platformLatch");
 System.out.println(platformDto);
 
@@ -299,10 +311,63 @@ true为继续等待（挂起直到有线程池资源的释放）
 
 false为直接抛出异常，丢弃当前任务
 
+### DANGER_WAIT_COUNT
+```
+/**
+ * 最大等待获取线程池的数量
+ */
+static int DANGER_WAIT_COUNT = 10;
+```
+当排队等待获取线程池的线程数大于DANGER_WAIT_COUNT将抛出异常
+
 ## 关键逻辑说明
 
 1. `ConcurrentLatchExcutor`中调用了线程池管理器来获取线程池
 1. 通过Future获取线程执行获得返回对象
 1. `LatchExcutorBlockingQueueManager`线程池管理器中通过阻塞队列来监控线程池的使用情况，线程池使用完成后不销毁，而是归还可用线程池队列，当可用线程池队列为空则无法获取线程池并执行相关失败策略，
-1. 代理方式put任务时，内部会将任务返回对象包装为map以绑定任务名称（JDK）[2017-11-25]
-1. 相关测试代码详见`org.zxp.ConcurrentLatch.demo.TestProxy#main`
+1. 代理方式put任务时，内部会将任务返回对象包装为`LatchThreadReturn`以绑定任务名称（JDK）[2017-11-25]
+1. 相关测试代码详见`org.zxp.ConcurrentLatch.demo.latch.ConcurrentLatchTester#main`
+
+
+# StandAloneMR
+1. StandAloneMR是一个单机处理多线程计算的框架，他的处理过程有部分类似于mapreduce的处理方式
+1. 他可以自动对入参列表进行分片，并自动调度线程进行计算，计算完成后再将结果平铺返回
+1. 底层采用`ConcurrentLatch`，极大的简化了并行计算时的代码量
+
+例如下面这段代码，我有一个输入的列表1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+在逻辑处理中需要将每个整数+1（当然有可能处理过程中需要消耗更多时间，例子中固定消耗1s）并返回
+```
+Date d1 = new Date();
+StandAloneMR standAloneMR = new StandAloneMRConcurrentLatch();
+List<Integer> rt = standAloneMR.deal(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10), s -> {
+    try {
+        Thread.sleep(1000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    //System.out.println(Thread.currentThread().getName()+"===="+s);
+    return s + 1;
+});
+Date d2 = new Date();
+System.out.println(d2.getTime()-d1.getTime());
+Collections.sort(rt);
+rt.forEach(System.out::println);
+```
+
+## 输入分片
+输入参数支持的分片方式`SplitType`有两种：hash分片、范围分片
+```
+public <M,T> List<T> deal(List<M> inList, Function<M,T> function,CalcType calcType,SplitType splitType);
+```
+默认为hash分片
+## 单次任务线程数量
+可以支持三种方式定义线程数：
+
+通过`CalcType`参数可以定义当前任务采用的是CPU密集型任务还是IO密集型任务，CPU型线程数为CPU数量+1，IO型线程数为CPU数*2
+```
+public <M,T> List<T> deal(List<M> inList, Function<M,T> function,CalcType calcType,SplitType splitType);
+```
+当然也可以通过自定义线程数
+```
+public <M,T> List<T> deal(List<M> inList, Function<M,T> function,Integer tc,SplitType splitType);
+```

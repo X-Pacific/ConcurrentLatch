@@ -1,21 +1,16 @@
-package org.zxp.ConcurrentLatch.demo;
+package org.zxp.ConcurrentLatch.demo.latch;
 
 import org.zxp.ConcurrentLatch.*;
-import org.zxp.ConcurrentLatch.demo.dto.PlatformDto;
-import org.zxp.ConcurrentLatch.demo.dto.RuleDto;
-import org.zxp.ConcurrentLatch.demo.dto.RuleQo;
-import org.zxp.ConcurrentLatch.demo.service.PlatformLatch;
-import org.zxp.ConcurrentLatch.demo.service.RuleLatch;
+import org.zxp.ConcurrentLatch.demo.latch.dto.PlatformDto;
+import org.zxp.ConcurrentLatch.demo.latch.dto.RuleDto;
+import org.zxp.ConcurrentLatch.demo.latch.dto.RuleQo;
+import org.zxp.ConcurrentLatch.demo.latch.service.PlatformLatch;
+import org.zxp.ConcurrentLatch.demo.latch.service.RuleLatch;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-public class TestProxy {
+public class ConcurrentLatchTester {
     public static void main(String[] args) throws Exception {
         //配置ConcurrentLatch（全局只能配置一次）
         ConcurrentLatchExcutorFactory.init(

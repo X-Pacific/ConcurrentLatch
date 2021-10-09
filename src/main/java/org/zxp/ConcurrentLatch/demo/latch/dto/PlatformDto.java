@@ -1,4 +1,4 @@
-package org.zxp.ConcurrentLatch.demo.dto;
+package org.zxp.ConcurrentLatch.demo.latch.dto;
 
 //@LatchTaskName("platform")
 public class PlatformDto {
