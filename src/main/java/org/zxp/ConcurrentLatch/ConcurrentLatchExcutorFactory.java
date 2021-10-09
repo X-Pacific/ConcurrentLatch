@@ -25,6 +25,7 @@ public class ConcurrentLatchExcutorFactory {
         Constants.MAX_EXCUTOR_SIZE = concurrentLatchCfg.getMaxExcutorSize();
         Constants.MAX_POOL_SIZE_RATIO = concurrentLatchCfg.getMaxPoolSizeRatio();
         Constants.DANGER_WAIT_COUNT = concurrentLatchCfg.getDangerWaitCount();
+        Constants.POOL_TYPE = concurrentLatchCfg.getPoolType();
         initFlag = true;
     }
     /**

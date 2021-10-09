@@ -1,5 +1,8 @@
 package org.zxp.ConcurrentLatch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -11,6 +14,7 @@ import java.util.stream.Collectors;
  * 目的是让每一个LatchThread调用handle方法都被map包围，标记其任务名称，达到执行任务返回结果与任务名称绑定的效果
  */
 class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
+    private static Logger logger = LoggerFactory.getLogger(ConcurrentLatchExcutorProxy.class);
     /** 线程池 不能是单例，否则有事物问题*/
     private ExecutorService excutor = null;
     /**入参的map*/
@@ -75,6 +79,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
 
     @Override
     public <T> Map<String, List<LatchThreadReturn>> excute() {
+        LatchExcutorBlockingQueueManager.ExcutorHolder holder = null;
         try {
             if (inputMap == null || inputMap.size() == 0) {
                 throw new ConcurrentLatchException("inputMap is null , please invoke function put");
@@ -83,7 +88,8 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
                 throw new ConcurrentLatchException("mapResult is not null , please invoke function release");
             }
             //从线程池管理器（缓存）中获取一个excutor
-            excutor = LatchExcutorBlockingQueueManager.getExcutor(inputMap.size());
+            holder = LatchExcutorBlockingQueueManager.getExcutor(inputMap.size());
+            excutor = holder.getExecutor();
             final Map<String, InputMapValue<List>> mapHandle = inputMap;
             List<Callable<LatchThreadReturn>> callables = new ArrayList<>();
             for (final String key : mapHandle.keySet()) {
@@ -94,7 +100,7 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
                     return latchThread.handle(m);
                 });
             }
-            List<Future<LatchThreadReturn>> results = excutor.invokeAll(callables);
+            List<Future<LatchThreadReturn>> results = this.excutor.invokeAll(callables);
             if(results == null){
                 return null;
             }
@@ -108,9 +114,11 @@ class ConcurrentLatchExcutorProxy implements ConcurrentLatch {
             return mapResult;
         }catch (Exception e){
             //todo 后续可以增加一个兜底策略，当报错时走备份方案
+            e.printStackTrace();
+            logger.error("ConcurrentLatchExcutorProxy excute exception",e);
             throw new ConcurrentLatchException("ConcurrentLatchExcutorProxy excute exception",e);
         }finally {
-            LatchExcutorBlockingQueueManager.takeExcutor(excutor);
+            LatchExcutorBlockingQueueManager.takeExcutor(holder);
         }
     }
 

@@ -1,7 +1,7 @@
 package org.zxp.ConcurrentLatch.expand.standalonemr.utils;
 
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
+//import com.google.common.hash.HashFunction;
+//import com.google.common.hash.Hashing;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +63,7 @@ public class CollectionUtils {
      * @return
      */
     public static <T> List<List<T>> splitListWithMurmurHash(List<T> oriList, boolean isParallel,Long count){
-        HashFunction murmur3 = Hashing.murmur3_32();
+//        HashFunction murmur3 = Hashing.murmur3_32();
         return null;
     }
 }

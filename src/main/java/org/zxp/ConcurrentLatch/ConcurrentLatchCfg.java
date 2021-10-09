@@ -37,6 +37,14 @@ public class ConcurrentLatchCfg {
     private int dangerWaitCount = 10;
 
 
+    /**
+     * 线程池类型
+     * 1、缓存线程
+     * 2、不缓存线程 newCachedThreadPool
+     */
+    private int poolType = 1;
+
+
     public static Builder builder(){
         return new Builder();
     }
@@ -118,5 +126,9 @@ public class ConcurrentLatchCfg {
 
     public int getDangerWaitCount() {
         return dangerWaitCount;
+    }
+
+    public int getPoolType() {
+        return poolType;
     }
 }

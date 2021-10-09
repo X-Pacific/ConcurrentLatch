@@ -44,6 +44,8 @@ ConcurrentLatch是一个基于JDK的多线程归类并发处理闩工具(基于J
 ### 2021-10-09[3.0-SNAPSHOT]
 
 1. 统一调整出入参数为list，并且定义了出参的通用类
+1. 优化了线程池管理器，当获取线程池时，会根据实际情况自动调整线程池线程数量
+1. 增加了newCachedThreadPool线程池的支持 
 1. 增加了一些对于已经put任务后对于任务处理的api
 1. 增加了一个单机mapreduce的封装类，简化并行代码量
 
@@ -320,12 +322,25 @@ static int DANGER_WAIT_COUNT = 10;
 ```
 当排队等待获取线程池的线程数大于DANGER_WAIT_COUNT将抛出异常
 
+
+### POOL_TYPE
+```
+/**
+ * 线程池类型
+ * 1、缓存线程
+ * 2、不缓存线程 newCachedThreadPool
+ */
+static int POOL_TYPE = 1;
+```
+支持两种线程池
+
+
 ## 关键逻辑说明
 
 1. `ConcurrentLatchExcutor`中调用了线程池管理器来获取线程池
 1. 通过Future获取线程执行获得返回对象
-1. `LatchExcutorBlockingQueueManager`线程池管理器中通过阻塞队列来监控线程池的使用情况，线程池使用完成后不销毁，而是归还可用线程池队列，当可用线程池队列为空则无法获取线程池并执行相关失败策略，
-1. 代理方式put任务时，内部会将任务返回对象包装为`LatchThreadReturn`以绑定任务名称（JDK）[2017-11-25]
+1. `LatchExcutorBlockingQueueManager`线程池管理器中通过阻塞队列来监控线程池的使用情况，线程池使用完成后不销毁，而是归还可用线程池队列，当可用线程池队列为空则无法获取线程池并执行相关失败策略，当获取线程池时持续6次及以上次数触达当前线程池最大任务数（或当前任务数的一半）时将会对线程池进行扩容或缩容（前提是单次任务数不超过`MAX_CORE_POOL_SIZE`）
+1. 代理方式put任务时，内部会将任务返回对象包装为`LatchThreadReturn`以绑定任务名称（JDK）
 1. 相关测试代码详见`org.zxp.ConcurrentLatch.demo.latch.ConcurrentLatchTester#main`
 
 

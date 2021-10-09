@@ -32,7 +32,11 @@ class Constants {
      */
     static int DANGER_WAIT_COUNT = 10;
 
-
-
+    /**
+     * 线程池类型
+     * 1、缓存线程
+     * 2、不缓存线程 newCachedThreadPool
+     */
+    static int POOL_TYPE = 1;
 
 }
